@@ -12,4 +12,4 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), apply the corresponding label from this table. Pass the label id in `labelIds` on `save_issue`.
 
-All five labels exist in the Docudex team (`DEX`). Edit the middle/right columns if you remap to different vocabulary later.
+All five labels exist in the Engineering team (`ENGG`). Edit the middle/right columns if you remap to different vocabulary later.
