@@ -92,3 +92,27 @@ func TestUnknownCommandErrors(t *testing.T) {
 		t.Error("expected error for unknown command, got nil")
 	}
 }
+
+// TestRootCommandCarriesBuildVersion proves the build-version seam is wired: the
+// root command exposes a version (default "dev", overridden at release time via
+// -ldflags -X), so cobra's/fang's --version reports it.
+func TestRootCommandCarriesBuildVersion(t *testing.T) {
+	if got := NewRootCmd().Version; got == "" {
+		t.Error("expected root command to carry a build version, got empty string")
+	}
+}
+
+// TestVersionFlagReportsBuildVersion covers the cobra --version seam that
+// NewRootCmd wires. Execute() additionally hands the same version+commit to
+// fang (fang.WithVersion/WithCommit) for styled output; that pass-through isn't
+// exercised here because it writes through fang's real stdout, not the test
+// harness — it's verified by building with -ldflags and running the binary.
+func TestVersionFlagReportsBuildVersion(t *testing.T) {
+	out, err := runRoot(t, "--version")
+	if err != nil {
+		t.Fatalf("docudex --version: unexpected error: %v", err)
+	}
+	if !strings.Contains(out, version) {
+		t.Errorf("docudex --version: output %q missing version %q", out, version)
+	}
+}

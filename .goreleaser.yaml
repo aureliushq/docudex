@@ -1,0 +1,110 @@
+# GoReleaser configuration for docudex.
+# Builds CGO-free cross-platform binaries on a version-tag push, publishes a
+# GitHub Release with archives + checksums, and updates the Homebrew tap.
+# Docs: https://goreleaser.com
+version: 2
+
+project_name: docudex
+
+before:
+  hooks:
+    - go mod tidy
+    # NOTE: per ADR-0004, once the embedded web UI lands the SPA must be built
+    # here (before `go build`) and embedded via go:embed. That integration is
+    # ENGG-32; this ticket (ENGG-7) intentionally ships the bare CLI.
+
+builds:
+  - id: docudex
+    binary: docudex
+    main: .
+    # Pure-Go build: no CGO so cross-compilation is trivial and static.
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # Reproducible-ish builds: pin the binary mtime to the commit timestamp.
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/aureliushq/docudex/internal/cli.version={{ .Version }}
+      - -X github.com/aureliushq/docudex/internal/cli.commit={{ .FullCommit }}
+
+archives:
+  - id: docudex
+    formats:
+      - tar.gz
+    # Windows users expect zips.
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - Merge pull request
+      - Merge branch
+
+# Homebrew casks are the current way GoReleaser ships pre-compiled binaries to a
+# tap (the older `brews`/formula path is deprecated). Casks are macOS-only, which
+# is exactly the acceptance criterion; Linux users get the install script.
+homebrew_casks:
+  - name: docudex
+    repository:
+      owner: aureliushq
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://github.com/aureliushq/docudex"
+    description: "Per-project, version-exact Go API reference docs"
+    # Marks the download host as trusted so Homebrew skips the interactive prompt.
+    url:
+      verified: "github.com/aureliushq/docudex"
+    binaries:
+      - docudex
+    # Skip pushing the cask for pre-release tags (e.g. v1.0.0-rc.1).
+    skip_upload: auto
+    commit_author:
+      name: goreleaser-bot
+      email: goreleaser-bot@users.noreply.github.com
+    # Strip the macOS quarantine flag so the binary runs without a Gatekeeper prompt.
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/docudex"]
+          end
+
+release:
+  github:
+    owner: aureliushq
+    name: docudex
+  # Publish directly on tag push; mark pre-release tags (e.g. v1.0.0-rc.1) as such.
+  draft: false
+  prerelease: auto

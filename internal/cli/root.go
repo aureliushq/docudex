@@ -25,6 +25,7 @@ func NewRootCmd() *cobra.Command {
 			"Go project's dependencies into a local store you can search from the\n" +
 			"terminal or browse in a local web UI — scoped to exactly what your\n" +
 			"project uses, and fully available offline.",
+		Version:       version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -58,7 +59,10 @@ func NewRootCmd() *cobra.Command {
 // the single entrypoint called by main.
 func Execute() {
 	cmd := NewRootCmd()
-	if err := fang.Execute(context.Background(), cmd); err != nil {
+	if err := fang.Execute(context.Background(), cmd,
+		fang.WithVersion(version),
+		fang.WithCommit(commit),
+	); err != nil {
 		fmt.Fprintln(os.Stderr, "docudex:", err)
 		os.Exit(1)
 	}
