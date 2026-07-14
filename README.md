@@ -32,9 +32,9 @@ curl -fsSL https://raw.githubusercontent.com/aureliushq/docudex/main/install.sh 
 ```
 
 The script detects your OS and architecture, downloads the matching release
-archive from GitHub, verifies its SHA-256 checksum, and installs the `docudex`
-binary. Override the install directory with `DOCUDEX_INSTALL_DIR` and pin a
-version with `DOCUDEX_VERSION`:
+binary from GitHub, verifies its SHA-256 checksum, and installs it. Override the
+install directory with `DOCUDEX_INSTALL_DIR` and pin a version with
+`DOCUDEX_VERSION`:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/aureliushq/docudex/main/install.sh \
@@ -43,9 +43,11 @@ curl -fsSL https://raw.githubusercontent.com/aureliushq/docudex/main/install.sh 
 
 ### Manual download
 
-Grab a prebuilt archive for your platform from the
-[releases page](https://github.com/aureliushq/docudex/releases), extract it, and
-put the `docudex` binary somewhere on your `PATH`.
+Grab the prebuilt binary for your platform from the
+[releases page](https://github.com/aureliushq/docudex/releases)
+(`docudex_<version>_<os>_<arch>`, or the `.exe` on Windows), rename it to
+`docudex`, make it executable (`chmod +x docudex`), and put it somewhere on your
+`PATH`.
 
 ### From source
 

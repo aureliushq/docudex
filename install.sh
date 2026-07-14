@@ -8,9 +8,9 @@
 #   DOCUDEX_VERSION      version/tag to install (e.g. v0.1.0); default: latest
 #   DOCUDEX_INSTALL_DIR  directory to install into;            default: /usr/local/bin
 #
-# The naming contract below mirrors .goreleaser.yaml: archives are
-# docudex_<version>_<os>_<arch>.tar.gz (version has NO leading "v"), published
-# under the v<version> release tag alongside a checksums.txt.
+# The naming contract below mirrors .goreleaser.yaml: release assets are the
+# raw binary docudex_<version>_<os>_<arch> (version has NO leading "v", no
+# extension on unix), published under the v<version> tag alongside a checksums.txt.
 
 set -eu
 
@@ -125,7 +125,8 @@ main() {
 	esac
 
 	install_dir="${DOCUDEX_INSTALL_DIR:-/usr/local/bin}"
-	filename="${BINARY}_${version}_${os}_${arch}.tar.gz"
+	# Raw binary asset — no archive extension on darwin/linux (see .goreleaser.yaml).
+	filename="${BINARY}_${version}_${os}_${arch}"
 	base="https://github.com/${REPO}/releases/download/${tag}"
 
 	info "installing ${BINARY} ${tag} (${os}/${arch})"
@@ -141,10 +142,8 @@ main() {
 
 	verify_checksum "${tmpdir}/${filename}" "${tmpdir}/checksums.txt" "$filename"
 
-	tar -xzf "${tmpdir}/${filename}" -C "$tmpdir" "$BINARY" ||
-		err "could not extract ${BINARY} from ${filename}"
-
-	dest=$(install_binary "${tmpdir}/${BINARY}" "$install_dir")
+	# The downloaded asset is the binary itself — no extraction needed.
+	dest=$(install_binary "${tmpdir}/${filename}" "$install_dir")
 	info "installed ${BINARY} to ${dest}"
 
 	case ":${PATH}:" in
