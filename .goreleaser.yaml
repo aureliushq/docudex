@@ -108,3 +108,7 @@ release:
   # Publish directly on tag push; mark pre-release tags (e.g. v1.0.0-rc.1) as such.
   draft: false
   prerelease: auto
+  # Overwrite same-named assets instead of erroring, so re-running the workflow
+  # for a tag (e.g. after fixing a tap-token permission) is idempotent rather
+  # than failing with "422 already_exists" on the pre-uploaded artifacts.
+  replace_existing_artifacts: true
