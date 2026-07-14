@@ -37,19 +37,14 @@ builds:
       - -X github.com/aureliushq/docudex/internal/cli.commit={{ .FullCommit }}
 
 archives:
+  # Ship the raw executable as the release asset — no tar/zip wrapper. darwin
+  # and linux assets have no extension; windows gets a .exe. Nothing is bundled
+  # alongside the binary (no README/LICENSE) since there is no archive.
   - id: docudex
     formats:
-      - tar.gz
-    # Windows users expect zips.
-    format_overrides:
-      - goos: windows
-        formats:
-          - zip
+      - binary
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
-    files:
-      - README.md
-      - LICENSE
 
 checksum:
   name_template: checksums.txt
