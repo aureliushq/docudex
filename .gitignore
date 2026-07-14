@@ -1,0 +1,12 @@
+# Compiled binary (produced by `go build` at the repo root)
+/docudex
+
+# Release artifacts
+/dist/
+
+# Test / coverage output
+*.out
+*.test
+
+# Local editor / OS cruft
+.DS_Store
