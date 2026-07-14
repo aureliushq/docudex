@@ -1,12 +1,14 @@
-// Package cli defines docudex's Cobra command tree: the root command, its
+// Package cli defines docudex's command tree: the root command, its
 // stub subcommands, and the persistent flags that feed configuration resolution.
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/aureliushq/docudex/internal/config"
+	"github.com/charmbracelet/fang"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +57,8 @@ func NewRootCmd() *cobra.Command {
 // Execute builds and runs the root command, exiting non-zero on error. It is
 // the single entrypoint called by main.
 func Execute() {
-	if err := NewRootCmd().Execute(); err != nil {
+	cmd := NewRootCmd()
+	if err := fang.Execute(context.Background(), cmd); err != nil {
 		fmt.Fprintln(os.Stderr, "docudex:", err)
 		os.Exit(1)
 	}
