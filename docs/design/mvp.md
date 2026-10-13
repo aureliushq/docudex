@@ -1,0 +1,62 @@
+## Context & Scope
+
+DocuDex is a documentation aggregator tool for developers and agents. It's a tool that can fetch, parse, and store project/repo-scoped documentation locally and make it available fully offline. The purpose of the tool is to provide humans with a unified and great developer experience for browsing docs for the language(s), frameworks, libraries/packages used by their projects in one place, instead of hunting for docs scattered across different tabs. For coding agents, provide a way to look up documentation without having to go online, in a token-efficient manner.
+
+### Why now?
+
+Humans need a way to quickly look up information about the languages, frameworks, libraries they're using. With agents, developers can generate a ton of code quickly but verifying, modifying, and learning that code needs tools that are just as fast. Does this SDK have a function called `createWorkflow`? What are the arguments for this function and what are their types?
+
+Agents need a way to quickly look up information about the specific dependencies for this project, the API, request and response data, etc. Web search tool calls cost tokens that could easily be saved if versioned documentation scoped to the repo is available offline.
+
+## Goals & Non-goals
+
+### Goals
+
+- Usable by both humans and agents. Humans and agents can browse and look up docs via commands for full-text search, symbol lookups, etc.
+- Browse docs with no internet connection
+- Versioned docs for every dependency in `go.mod`
+- Usable with three basic commands - init, add, serve - with no manual
+- Usable for everyone working in a repo - the same, versioned docs, with no server and no accounts
+- Support the go standard library and third-party go packages
+
+### Non-goals
+
+- Hosted version with team features because I'm not yet sure of what the business model is yet and the product doesn't yet have a proven market
+- Support for other languages, ecosystems, and frameworks like Rust, NPM, etc since DocuDex is written in Go, I can easily dogfood it while building it
+- Web Scrapers and Github files as sources for documentation because they require much more work to have a robust solution that works well in the long run
+- Documentation browsing via local web app only and no markdown rendered in the CLI/TUI because the web app takes a lot less work while the storage format and API design is still in flux
+
+## Design
+
+DocuDex will ship as a CLI rather than a desktop app or editor extension. Both humans and agents already run on the terminal. Agents can be instructed to run `sync` when `go.mod` changes and can run `lookup` commands for searching symbols. The cost is reach - nothing is visible till `serve` runs. I accept that cost because it's easier and cost effective to have agents use the CLI. For desktop or editor extensions, I have to ship an agent interface. Open questions: how do agents use the CLI (skills/MCP/AGENTS.md/combo), how to make agents use the files on disk, cross-directory permissions.  
+
+Docs are available via a local http server + a frontend rather than a static site opened via `file://`. The cost is that the server takes up a port and the user needs to keep the process running. I accept this cost because having a http server comes with benefits - live reload when user/agent runs `sync` and search endpoint. Open questions: how can I make it easier for the user to start/stop the server, should the server run in the background and have a dedicated stop command.
+
+Storage: Docs are stored in SQLite + Markdown. SQLite so we get FTS5 which we get out of the box. Markdown so agents can `cat` or `grep` it. Agents are already good at using common Linux CLI tools. If we only use SQLite, agents can't run those commands to look up information quickly. If we only use Markdown, then full-text search across potentially hundreds or thousands of files is expensive because we have to index it. The cost is that we have to rebuild the cache on every `sync`. But that is acceptable because the benefits of using both means we have a good developer experience. For SQLite, we're using `modernc.org/sqlite` so we can simplify distribution via github releases, homebrew, etc. For our use case, it will still be fast enough for users when they run `add` or `sync`.
+
+DocuDex will initially ship with support only for Go standard library and third-party Go packages using godoc for documentation rather than support additional popular languages/ecosystems like Rust, TypeScript, etc. The cost is that the MVP can only target Golang developers initially. Monorepos with Go and other TS/JS frontend will only have docs for the Go part. This cost is also acceptable for the MVP since I'm building DocuDex in Go, I'll be able to dogfood it as I'm building it. After the MVP ships, we can target other languages/ecosystems. Open question and potential cost is that for third-party Go packages we can only get API references  because we're relying on godoc for downloading docs. This might leave gaps in what docs are available, if for example, a dependency only ships guides in their site, so the user still has to go to that docs site for guides.
+
+Manifest: DocuDex will generate a manifest file derived from `go.mod` instead of relying on `go.mod` for fetching docs. This manifest file will act as the source of truth for docudex. It can be committed to version control so teammates can just run `sync` to fetch and store files after a fresh clone. The cost is maintaining a separate copy of the versions of dependency, keeping them in sync, and detect drifts to warn the user. But this cost is acceptable because a separate manifest has some benefits - it explicitly states the source for docudex, users can add additional versions for dependencies for upgrades (and when they do, the web UI can show the diffs between the two versions).
+
+## Alternatives Considered
+
+I initially wanted a fully online experience provided by existing documentation aggregators like devdocs, etc. But I changed my mind and went with a CLI because of the reasons mentioned above. Also, there's a lot of work involved for providing a hosted experience like document fetching, parsing, storage, and serving, users needing an internet connection, etc. While users need internet for fetching docs with the CLI, the web app will work completely offline.
+
+DocuDex could have generated a static site and let the user the site open in the browser. This I think provides a suboptimal user/developer experience since we're losing live reload, search endpoint, etc.
+
+Storing docs only in SQLite or only as Markdown files. Either have trade-offs but using both provides advantages at the cost of keeping them in sync. `mattn/go-sqlite3` is faster but it needs a C compiler for cross-platform builds and complicates CI/CD. I'd rather keep things simple and use the pure Go driver.
+
+Content fetching via web scraping and github files. This will take a ton of work. Web scraping especially is flaky and prone to errors. It's also unethical towards a lot of package maintainers who are running their sites on a budget. Hitting their sites with traffic doesn't seem right. I do a lot of work in TypeScript, React, Node, etc, I wanted to support these as well for the MVP. In contrast to something like Golang, TypeScript and the entire TS/JS ecosystem doesn't have a standard way for documentation. It's scattered across outdated websites, markdown in github repos, NPM package pages, and more. Accounting for all of them is too much work and doesn't seem viable for a MVP.
+
+Using `go.mod` for fetching versioned docs. This is actually simpler since there's one source of truth and there's no drift issues like with the manifest. But using `go.mod` means that we're tightly coupled with the build and makes comparison with other versions impossible and in a large project it might constantly be shifting. I want the user to be explicit when they sync docs and only sync when they want to (like they might be working offline, have a poor connection, drift is negligible, or they might be working on a different service/package that wasn't affected by a change in `go.mod`, etc). DocuDex will still warn the user about the drift.
+
+## Cross-cutting Concerns
+
+Being a CLI that fetches and stores content in a developer's machine does come with certain risks. I have to strictly curate what the CLI can and cannot fetch, where it goes for documentation, and make sure the data/content it's fetching is safe to store in a developer's disk. This is especially important when we let the developers/users define their own sources. So this has to come with strict guardrails.
+
+## Open Questions
+
+- How do I monetize this app if anyone in a team can use DocuDex for free? What is the business model here?
+- How do I make it easy for agents to use DocuDex? What will the API look like?
+- When I have to build a scraper/fetcher, what's the best way? This can't turn into a web scraper project but we need versioned docs.
+- What should the standardized Markdown format look like?
