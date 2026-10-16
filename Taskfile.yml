@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  GREETING: Hello, Nerd!
+
+tasks:
+  build:
+    desc: Build a new DocuDex executable
+    cmds:
+      - go build -o docudex
+    silent: true
+  default:
+    desc: Print a list of available commands
+    cmds:
+      - task --list
+    silent: true
+  run:
+    desc: Run the CLI
+    cmds:
+      - go run . {{.CLI_ARGS}}
+    silent: true
