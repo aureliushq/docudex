@@ -9,7 +9,7 @@ tasks:
   build:
     desc: Build a new DocuDex executable
     cmds:
-      - go build -o docudex ./cmd
+      - go build -o ./build/docudex ./cmd
     silent: true
   default:
     desc: Print a list of available commands

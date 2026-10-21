@@ -2,6 +2,7 @@
 /docudex
 
 # Release artifacts
+/build/
 /dist/
 
 # Test / coverage output
