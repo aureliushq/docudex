@@ -9,40 +9,17 @@ import (
 
 	"github.com/aureliushq/docudex/internal/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 )
 
-type RequiredDependency struct {
-	Path         string
-	Version      string
-	ModCachePath string
-}
-
-func NewRequiredDependency() RequiredDependency {
-	return RequiredDependency{
-		Path:         "",
-		Version:      "",
-		ModCachePath: "",
-	}
-}
-
-type ModInfo struct {
-	Path                 string
-	GoVersion            string
-	RequiredDependencies []RequiredDependency
-}
-
-func NewModInfo() ModInfo {
-	return ModInfo{
-		Path:                 "",
-		GoVersion:            "",
-		RequiredDependencies: []RequiredDependency{},
-	}
-}
+var (
+	cfg          config.Config
+	dependencies config.Dependencies
+)
 
 func newInitCommand() *cobra.Command {
-	modInfo := ModInfo{}
 	// initCmd represents the init command
 	initCmd := &cobra.Command{
 		Use:   "init",
@@ -52,11 +29,22 @@ func newInitCommand() *cobra.Command {
 			"direct dependencies (plus the Go standard library) at their exact\n" +
 			"versions, and fetch their docs into the store.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			config.NewConfig()
-			return nil
+			cfg = config.NewConfig()
+			dependencies = make(map[config.DependencyPath]config.DependencyMetadata)
+			if err := cfg.SetupConfig(); err == nil {
+				// TODO: ask user if they want to overwrite and ask them to use a flag (TBD)
+				// TODO: suggest running sync
+				// return errors.New("Found existing configuration file: docudex.toml")
+				return nil
+			} else {
+				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+					return nil
+				}
+				return err
+			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runInit(&modInfo)
+			err := runInit()
 			return err
 		},
 	}
@@ -73,7 +61,8 @@ func newInitCommand() *cobra.Command {
 	return initCmd
 }
 
-func runInit(mi *ModInfo) error {
+func runInit() error {
+
 	file, err := os.ReadFile("go.mod")
 	if err != nil {
 		fmt.Printf("Error reading go.mod: %s", err)
@@ -84,11 +73,13 @@ func runInit(mi *ModInfo) error {
 		fmt.Printf("Error parsing go.mod: %s", err)
 		return err
 	}
-	mi.Path = goMod.Module.Mod.Path
-	mi.GoVersion = goMod.Go.Version
 	for _, req := range goMod.Require {
 		if !req.Indirect {
-			rd := NewRequiredDependency()
+			// dep := config.NewDependency()
+			if err = module.Check(req.Mod.Path, req.Mod.Version); err != nil {
+				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
+				return err
+			}
 			escapedPath, err := module.EscapePath(req.Mod.Path)
 			if err != nil {
 				fmt.Printf("Error escaping module path for: %s, error: %s", req.Mod.Path, err)
@@ -99,18 +90,22 @@ func runInit(mi *ModInfo) error {
 				fmt.Printf("Error escaping module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
 				return err
 			}
-			rd.Path = escapedPath
-			rd.Version = escapedVersion
-			if err = module.Check(escapedPath, escapedVersion); err != nil {
-				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", escapedPath, escapedVersion, err)
-				return err
-			}
-			fmt.Printf("%s@%s\n", escapedPath, escapedVersion)
-			mi.RequiredDependencies = append(mi.RequiredDependencies, rd)
+			dependencies[config.DependencyPath(escapedPath)] = config.DependencyMetadata{Default: false, Version: escapedVersion}
+			// rd.InfoPath = fmt.Sprintf("%s/%s/@v/%s.info\n", cacheDownloadPath, escapedPath, escapedVersion)
+			// rd.ZipPath = fmt.Sprintf("%s/%s/@v/%s.zip\n", cacheDownloadPath, escapedPath, escapedVersion)
 		}
 	}
 
-	fmt.Printf("ModInfo: %v\n", mi)
+	cfg.ModulePath = goMod.Module.Mod.Path
+	cfg.GoVersion = goMod.Go.Version
+	cfg.Dependencies = dependencies
+	fmt.Printf("Config: %v\n", cfg)
+
+	err = cfg.WriteConfig()
+	if err != nil {
+		fmt.Printf("Error writing configuration file: %s", err)
+		return err
+	}
 
 	return nil
 }
