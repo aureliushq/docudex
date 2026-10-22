@@ -16,29 +16,31 @@ const DefaultConfigFile = "docudex.toml"
 type DependencyPath string
 
 type DependencyMetadata struct {
-	Default bool
-	Version string
+	Default bool   `toml:"default"`
+	Version string `toml:"version"`
 }
 
 type Dependencies map[DependencyPath]DependencyMetadata
 
 type Config struct {
-	Title          string `toml:"title"`
-	ModulePath     string `toml:"module_path"`
-	GoVersion      string `toml:"go_version"`
-	GoModCachePath string `toml:"go_mod_cache_path"`
-	GoProxyURL     string `toml:"go_proxy_url"`
+	Title          string `mapstructure:"title"`
+	ModulePath     string `mapstructure:"module_path"`
+	GoVersion      string `mapstructure:"go_version"`
+	GoModCachePath string `mapstructure:"go_mod_cache_path"`
+	GoProxy        string `mapstructure:"go_proxy"`
 
-	Dependencies Dependencies
+	Dependencies Dependencies `mapstructure:"dependencies"`
 
 	Viper *viper.Viper `mapstructure:"-"`
 }
 
 func NewConfig() Config {
 	goModCachePath := getGoModCachePath()
+	goProxy := getGoProxy()
 
 	cfg := Config{
 		GoModCachePath: goModCachePath,
+		GoProxy:        goProxy,
 
 		Viper: viper.New(),
 	}
@@ -90,5 +92,18 @@ func getGoModCachePath() string {
 			fmt.Printf("Error getting GOMODCACHE: %s", err)
 		}
 		return strings.TrimSpace(string(envCachePath))
+	}
+}
+
+func getGoProxy() string {
+	goProxy := os.Getenv("GOPROXY")
+	if goProxy != "" {
+		return goProxy
+	} else {
+		goProxy, err := exec.Command("go", "env", "GOPROXY").Output()
+		if err != nil {
+			fmt.Printf("Error getting GOPROXY: %s", err)
+		}
+		return strings.TrimSpace(string(goProxy))
 	}
 }

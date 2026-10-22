@@ -1,18 +1,26 @@
-gomodcachepath = '/Users/i4o/go/pkg/mod'
-goproxyurl = ''
-goversion = '1.27.1'
-modulepath = 'github.com/aureliushq/docudex'
+go_mod_cache_path = '/Users/i4o/go/pkg/mod'
+go_proxy = 'https://proxy.golang.org,direct'
+go_version = '1.27.1'
+module_path = 'github.com/aureliushq/docudex'
 title = ''
 
 [dependencies]
 [dependencies.'github.com/charmbracelet/fang']
-Default = false
-Version = 'v1.0.0'
+default = false
+version = 'v1.0.0'
+
+[dependencies.'github.com/go-viper/mapstructure/v2']
+default = false
+version = 'v2.4.0'
 
 [dependencies.'github.com/spf13/cobra']
-Default = false
-Version = 'v1.10.2'
+default = false
+version = 'v1.10.2'
+
+[dependencies.'github.com/spf13/viper']
+default = false
+version = 'v1.21.0'
 
 [dependencies.'golang.org/x/mod']
-Default = false
-Version = 'v0.40.0'
+default = false
+version = 'v0.40.0'

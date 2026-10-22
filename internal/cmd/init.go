@@ -62,7 +62,6 @@ func newInitCommand() *cobra.Command {
 }
 
 func runInit() error {
-
 	file, err := os.ReadFile("go.mod")
 	if err != nil {
 		fmt.Printf("Error reading go.mod: %s", err)
@@ -75,7 +74,6 @@ func runInit() error {
 	}
 	for _, req := range goMod.Require {
 		if !req.Indirect {
-			// dep := config.NewDependency()
 			if err = module.Check(req.Mod.Path, req.Mod.Version); err != nil {
 				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
 				return err
@@ -91,15 +89,12 @@ func runInit() error {
 				return err
 			}
 			dependencies[config.DependencyPath(escapedPath)] = config.DependencyMetadata{Default: false, Version: escapedVersion}
-			// rd.InfoPath = fmt.Sprintf("%s/%s/@v/%s.info\n", cacheDownloadPath, escapedPath, escapedVersion)
-			// rd.ZipPath = fmt.Sprintf("%s/%s/@v/%s.zip\n", cacheDownloadPath, escapedPath, escapedVersion)
 		}
 	}
 
 	cfg.ModulePath = goMod.Module.Mod.Path
 	cfg.GoVersion = goMod.Go.Version
 	cfg.Dependencies = dependencies
-	fmt.Printf("Config: %v\n", cfg)
 
 	err = cfg.WriteConfig()
 	if err != nil {
