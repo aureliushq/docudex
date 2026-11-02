@@ -1,0 +1,45 @@
+package internal
+
+import (
+	"encoding/json/v2"
+	"fmt"
+	"os/exec"
+)
+
+type Origin struct {
+	VCS  string `json:"VCS"`
+	URL  string `json:"URL"`
+	Hash string `json:"Hash"`
+	Ref  string `json:"Ref"`
+}
+
+type Module struct {
+	Path     string `json:"Path"`     // module path
+	Query    string `json:"Query"`    // version query corresponding to this version
+	Version  string `json:"Version"`  // module version
+	Error    string `json:"Error"`    // error loading module
+	Info     string `json:"Info"`     // absolute path to cached .info file
+	GoMod    string `json:"GoMod"`    // absolute path to cached .mod file
+	Zip      string `json:"Zip"`      // absolute path to cached .zip file
+	Dir      string `json:"Dir"`      // absolute path to cached source root directory
+	Sum      string `json:"Sum"`      // checksum for path, version (as in go.sum)
+	GoModSum string `json:"GoModSum"` // checksum for go.mod (as in go.sum)
+	Origin   Origin `json:"Origin"`   // provenance of module
+	Reuse    bool   `json:"Reuse"`    // reuse of old module info is safe
+}
+
+func FetchModuleWithVersion(module, version string) (string, error) {
+	modulePath := fmt.Sprintf("%s@%s", module, version)
+	resp, err := exec.Command("go", "mod", "download", "-json", modulePath).Output()
+	if err != nil {
+		fmt.Printf("Error running `go mod download` for module: %s, Error: %s", err)
+		return "", err
+	}
+	var mod Module
+	if err = json.Unmarshal(resp, &mod); err != nil {
+		fmt.Printf("Error running `go mod download` for module: %s, Error: %s", err)
+		return "", err
+	}
+	return mod.Dir, nil
+
+}
