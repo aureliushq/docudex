@@ -1,11 +1,7 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-
+	"github.com/aureliushq/docudex/internal"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 )
@@ -35,8 +31,8 @@ type Config struct {
 }
 
 func NewConfig() Config {
-	goModCachePath := getGoModCachePath()
-	goProxy := getGoProxy()
+	goModCachePath := internal.GetGoModCachePath()
+	goProxy := internal.GetGoProxy()
 
 	cfg := Config{
 		GoModCachePath: goModCachePath,
@@ -63,47 +59,18 @@ func (cfg *Config) WriteConfig() error {
 	cfgMap := map[string]any{}
 	err := mapstructure.Decode(cfg, &cfgMap)
 	if err != nil {
-		fmt.Printf("Error decoding struct to map: %s\n", err)
 		return err
 	}
 
 	err = cfg.Viper.MergeConfigMap(cfgMap)
 	if err != nil {
-		fmt.Printf("Error merging config map: %s\n", err)
 		return err
 	}
 
 	err = cfg.Viper.SafeWriteConfig()
 	if err != nil {
-		fmt.Printf("Error writing configuration file: %s\n", err)
 		return err
 	}
 
 	return nil
-}
-
-func getGoModCachePath() string {
-	envCachePath := os.Getenv("GOMODCACHE")
-	if envCachePath != "" {
-		return envCachePath
-	} else {
-		envCachePath, err := exec.Command("go", "env", "GOMODCACHE").Output()
-		if err != nil {
-			fmt.Printf("Error getting GOMODCACHE: %s", err)
-		}
-		return strings.TrimSpace(string(envCachePath))
-	}
-}
-
-func getGoProxy() string {
-	goProxy := os.Getenv("GOPROXY")
-	if goProxy != "" {
-		return goProxy
-	} else {
-		goProxy, err := exec.Command("go", "env", "GOPROXY").Output()
-		if err != nil {
-			fmt.Printf("Error getting GOPROXY: %s", err)
-		}
-		return strings.TrimSpace(string(goProxy))
-	}
 }
