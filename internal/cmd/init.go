@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/aureliushq/docudex/internal"
 	"github.com/aureliushq/docudex/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,17 +80,8 @@ func runInit() error {
 				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
 				return err
 			}
-			escapedPath, err := module.EscapePath(req.Mod.Path)
-			if err != nil {
-				fmt.Printf("Error escaping module path for: %s, error: %s", req.Mod.Path, err)
-				return err
-			}
-			escapedVersion, err := module.EscapeVersion(req.Mod.Version)
-			if err != nil {
-				fmt.Printf("Error escaping module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
-				return err
-			}
-			dependencies[config.DependencyPath(escapedPath)] = config.DependencyMetadata{Default: false, Version: escapedVersion}
+			internal.FetchModuleWithVersion(req.Mod.Path, req.Mod.Version)
+			dependencies[config.DependencyPath(req.Mod.Path)] = config.DependencyMetadata{Default: false, Version: req.Mod.Version}
 		}
 	}
 
@@ -98,7 +91,7 @@ func runInit() error {
 
 	err = cfg.WriteConfig()
 	if err != nil {
-		fmt.Printf("Error writing configuration file: %s", err)
+		log.Fatal(err)
 		return err
 	}
 
