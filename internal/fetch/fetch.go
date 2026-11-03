@@ -1,4 +1,4 @@
-package internal
+package fetch
 
 import (
 	"encoding/json/v2"
@@ -28,18 +28,18 @@ type Module struct {
 	Reuse    bool   `json:"Reuse"`    // reuse of old module info is safe
 }
 
-func FetchModuleWithVersion(module, version string) (string, error) {
+func ModuleWithVersion(module, version string) (string, error) {
+	if version == "" {
+		version = "latest"
+	}
 	modulePath := fmt.Sprintf("%s@%s", module, version)
 	resp, err := exec.Command("go", "mod", "download", "-json", modulePath).Output()
 	if err != nil {
-		fmt.Printf("Error running `go mod download` for module: %s, Error: %s", err)
 		return "", err
 	}
 	var mod Module
-	if err = json.Unmarshal(resp, &mod); err != nil {
-		fmt.Printf("Error running `go mod download` for module: %s, Error: %s", err)
+	if err := json.Unmarshal(resp, &mod); err != nil {
 		return "", err
 	}
 	return mod.Dir, nil
-
 }
