@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
-	"github.com/aureliushq/docudex/internal"
 	"github.com/aureliushq/docudex/internal/config"
+	"github.com/aureliushq/docudex/internal/fetch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/modfile"
@@ -80,7 +81,7 @@ func runInit() error {
 				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
 				return err
 			}
-			internal.FetchModuleWithVersion(req.Mod.Path, req.Mod.Version)
+			fetch.ModuleWithVersion(req.Mod.Path, req.Mod.Version)
 			dependencies[config.DependencyPath(req.Mod.Path)] = config.DependencyMetadata{Default: false, Version: req.Mod.Version}
 		}
 	}
