@@ -19,11 +19,11 @@ type DependencyMetadata struct {
 type Dependencies map[DependencyPath]DependencyMetadata
 
 type Config struct {
-	Title          string `mapstructure:"title"`
-	ModulePath     string `mapstructure:"module_path"`
-	GoVersion      string `mapstructure:"go_version"`
-	GoModCachePath string `mapstructure:"go_mod_cache_path"`
-	GoProxy        string `mapstructure:"go_proxy"`
+	Title      string `mapstructure:"title"`
+	ModulePath string `mapstructure:"module_path"`
+	GoVersion  string `mapstructure:"go_version"`
+	GoModCache string `mapstructure:"go_mod_cache"`
+	GoProxy    string `mapstructure:"go_proxy"`
 
 	Dependencies Dependencies `mapstructure:"dependencies"`
 
@@ -31,12 +31,12 @@ type Config struct {
 }
 
 func NewConfig() Config {
-	goModCachePath := internal.GetGoModCachePath()
+	goModCache := internal.GetGoModCachePath()
 	goProxy := internal.GetGoProxy()
 
 	cfg := Config{
-		GoModCachePath: goModCachePath,
-		GoProxy:        goProxy,
+		GoModCache: goModCache,
+		GoProxy:    goProxy,
 
 		Viper: viper.New(),
 	}

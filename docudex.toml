@@ -1,4 +1,4 @@
-go_mod_cache_path = '/Users/i4o/go/pkg/mod'
+go_mod_cache = '/Users/i4o/go/pkg/mod'
 go_proxy = 'https://proxy.golang.org,direct'
 go_version = '1.27.1'
 module_path = 'github.com/aureliushq/docudex'
