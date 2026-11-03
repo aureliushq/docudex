@@ -38,6 +38,7 @@ func NewRootCommand() *cobra.Command {
 	root.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	root.AddCommand(
+		newAddCommand(),
 		newInitCommand(),
 		newSyncCommand(),
 	)
