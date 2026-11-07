@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/aureliushq/docudex/internal/config"
 	"github.com/aureliushq/docudex/internal/fetch"
