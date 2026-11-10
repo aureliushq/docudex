@@ -2,6 +2,7 @@ package fetch
 
 import (
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -33,13 +34,13 @@ func DownloadModuleWithVersion(module, version string) (Module, error) {
 		version = "latest"
 	}
 	modulePath := fmt.Sprintf("%s@%s", module, version)
-	resp, err := exec.Command("go", "mod", "download", "-json", modulePath).Output()
-	if err != nil {
-		return Module{}, err
-	}
+	resp, runErr := exec.Command("go", "mod", "download", "-json", modulePath).Output()
 	var mod Module
 	if err := json.Unmarshal(resp, &mod); err != nil {
-		return Module{}, err
+		return Module{}, errors.Join(runErr, err)
 	}
-	return mod, nil
+	if mod.Error != "" {
+		return Module{}, errors.New(mod.Error)
+	}
+	return mod, runErr
 }
