@@ -26,3 +26,8 @@ tasks:
     cmds:
       - go run ./cmd/docudex {{.CLI_ARGS}}
     silent: true
+  test:
+    desc: Run the full test suite with verbose output
+    cmds:
+      - go test -v ./...
+    silent: true
