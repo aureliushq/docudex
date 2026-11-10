@@ -11,3 +11,6 @@
 
 # Local editor / OS cruft
 .DS_Store
+
+# Codegraph
+.codegraph

@@ -31,3 +31,8 @@ tasks:
     cmds:
       - go test -v ./...
     silent: true
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+    silent: true
