@@ -1,5 +1,3 @@
 package fetch
 
-import (
-	"fmt"
-)
+import ()
