@@ -80,7 +80,7 @@ func runInit() error {
 				fmt.Printf("Path is invalid for module: %s, version: %s, error: %s", req.Mod.Path, req.Mod.Version, err)
 				return err
 			}
-			fetch.ModuleWithVersion(req.Mod.Path, req.Mod.Version)
+			fetch.DownloadModuleWithVersion(req.Mod.Path, req.Mod.Version)
 			dependencies[config.DependencyPath(req.Mod.Path)] = config.DependencyMetadata{Default: false, Version: req.Mod.Version}
 		}
 	}
